@@ -1,0 +1,5 @@
+1. new terminal folder
+2. git init
+3. add a existing repo (same folder where git init) (desktop app)
+4. git add . (if want to add all the files)
+5. git commit -am"message" (add commit for the 1st time also)

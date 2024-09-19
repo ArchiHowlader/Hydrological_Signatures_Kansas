@@ -97,3 +97,4 @@ seasonal_average_streamflow_pivot <- seasonal_average_streamflow %>%
               names_prefix = "Mean", values_fill = NA)
 
 print(seasonal_average_streamflow_pivot)
+seasonal_average_streamflow_pivot
