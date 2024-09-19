@@ -3,3 +3,8 @@
 3. add a existing repo (same folder where git init) (desktop app)
 4. git add . (if want to add all the files)
 5. git commit -am"message" (add commit for the 1st time also)
+6. if do not want to commit then
+1. touch .gitignore
+2. cmnd +shift+. 
+file open 
+name of the file not want to commit 

@@ -39,17 +39,22 @@ require(gridExtra)
 library(Metrics)
 library(scales)
 
+# change file_Path_Variable 
 
-AllYear_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds") #%>% 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+
+
+AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds") )
 AllYear_StreamflowData
 
 
 
-MediumTerm_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_MediumSubset_step3.rds") #%>% 
+MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
 MediumTerm_StreamflowData
 
 
-LongTerm_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_LongSubset_step3.rds") #%>% 
+LongTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_step3.rds"))
 LongTerm_StreamflowData
 
 
@@ -163,7 +168,7 @@ checkdataS$Spring-checkdataB$MeanSpring
 
 AllYear_StreamflowData_Annual<-Combined_Data
 
-saveRDS(AllYear_StreamflowData_Annual,"/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/AllYear_StreamflowData_Annual_step4.rds")
+saveRDS(AllYear_StreamflowData_Annual, file.path(file_Path_Variable_O, "AllYear_StreamflowData_Annual_step4.rds"))
 
 
 #### For medium term subset 
@@ -171,7 +176,7 @@ saveRDS(AllYear_StreamflowData_Annual,"/Users/ahowl/Desktop/KGS Data analysis/St
 MediumTerm_StreamflowData_Annual <- AllYear_StreamflowData_Annual %>%
   filter(site_no %in% MediumTerm_StreamflowData$site_no)
 
-saveRDS(MediumTerm_StreamflowData_Annual,"/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/MediumTerm_StreamflowData_Annual_step4.rds")
+saveRDS(MediumTerm_StreamflowData_Annual,file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_step4.rds"))
 
 
 
@@ -181,7 +186,7 @@ saveRDS(MediumTerm_StreamflowData_Annual,"/Users/ahowl/Desktop/KGS Data analysis
 LongTerm_StreamflowData_Annual <- AllYear_StreamflowData_Annual %>%
   filter(site_no %in% LongTerm_StreamflowData$site_no)
 
-saveRDS(LongTerm_StreamflowData_Annual,"/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/LongTerm_StreamflowData_Annual_step4.rds")
+saveRDS(LongTerm_StreamflowData_Annual,file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_step4.rds"))
 
 
 

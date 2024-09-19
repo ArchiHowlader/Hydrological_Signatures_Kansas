@@ -39,17 +39,22 @@ require(gridExtra)
 library(Metrics)
 library(scales)
 
+# change file_Path_Variable 
 
-AllYear_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds") #%>% 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+
+
+AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds"))
 AllYear_StreamflowData
 
 
 
-MediumTerm_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_MediumSubset_step3.rds") #%>% 
+MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
 MediumTerm_StreamflowData
 
 
-LongTerm_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_LongSubset_step3.rds") #%>% 
+LongTerm_StreamflowData <-  readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_LongSubset_step3.rds"))
 LongTerm_StreamflowData
 
 
@@ -58,12 +63,14 @@ LongTerm_StreamflowData
 
 ############Figure 
 
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
-RiverNetwork<- "/Users/ahowl/Desktop/KGS Data analysis/rivers_ksrb/rivers_ksrb.shp"
+
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
+
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
-RiverNetwork_shp <- st_read(RiverNetwork)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
 watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
 RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
 combined_shp <- st_union(desoto_shp, watershed_shp)
@@ -72,7 +79,7 @@ combined_shp_leaflet <- st_as_sf(combined_shp)
 
 ### All average 
 
-AllYear_StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds") #%>% 
+AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds"))
 AllYear_StreamflowData
 
 overall_average_streamflow_AllYear <- AllYear_StreamflowData %>%
@@ -128,7 +135,7 @@ overall_average_streamflow_AllYear_Map <- ggplot() +
 
 print(overall_average_streamflow_AllYear_Map)
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step4_overall_average_streamflow_AllYear.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step4_overall_average_streamflow_AllYear.jpg")), 
        plot = overall_average_streamflow_AllYear_Map, 
        width = 8, height = 6, dpi = 300)
 
@@ -164,7 +171,7 @@ overall_average_streamflow_MediumTerm_Map <- ggplot() +
 
 print(overall_average_streamflow_MediumTerm_Map)
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step4_overall_average_streamflow_MediumTerm_Map.jpg', 
+ggsave(filename =(file.path(file_Path_Variable_O,"Step4_overall_average_streamflow_MediumTerm_Map.jpg")), 
        plot = overall_average_streamflow_MediumTerm_Map, 
        width = 8, height = 6, dpi = 300)
 
@@ -204,6 +211,6 @@ overall_average_streamflow_LongTerm_Map <- ggplot() +
 
 print(overall_average_streamflow_LongTerm_Map)
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step4_overall_average_streamflow_LongTerm_Map.jpg', 
+ggsave(filename =(file.path(file_Path_Variable_O,"Step4_overall_average_streamflow_LongTerm_Map.jpg")), 
        plot = overall_average_streamflow_LongTerm_Map, 
        width = 8, height = 6, dpi = 300)
