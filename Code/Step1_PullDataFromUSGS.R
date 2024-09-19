@@ -40,10 +40,11 @@ library(Metrics)
 library(scales)
 
 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
 
-
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
 
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
@@ -220,7 +221,7 @@ streamflow_tibbles<- streamflow_tibbles %>%
 
 streamflow_tibbles<- streamflow_tibbles %>% select(station_name,site_no,station_lat,station_lon,streamflow_data,streamflowUnit)
 
-saveRDS(streamflow_tibbles,'Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_step1.rds')
+#saveRDS(streamflow_tibbles,(file.path(file_Path_Variable_O,"streamflow_tibbles_step1.rds")))
 
 # check data from the usgs website 
 streamflow_tibbles$site_no[35]
