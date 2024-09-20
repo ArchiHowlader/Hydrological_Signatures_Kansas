@@ -40,7 +40,10 @@ library(Metrics)
 library(scales)
 
 
-StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds") #%>% 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+
+StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds")) #%>% 
 StreamflowData
 
 
@@ -123,7 +126,7 @@ for (i in seq(1, length(FinalData_cleaned_split), by = 18)) {
 
 Timelineplot1 <- (plot_list[[1]] + plot_list[[2]] )/(plot_list[[3]] + plot_list[[4]] )
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step3_Timelineplot1_MediumSubset.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_MediumSubset.jpg")), 
        plot = Timelineplot1, 
        width = 16, height = 8, dpi = 300)  
 
@@ -137,12 +140,15 @@ ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/
 
 ##make a map with all the stations 
 
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
-RiverNetwork<- "/Users/ahowl/Desktop/KGS Data analysis/rivers_ksrb/rivers_ksrb.shp"
+
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
+
+
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
-RiverNetwork_shp <- st_read(RiverNetwork)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
 watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
 RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
 combined_shp <- st_union(desoto_shp, watershed_shp)
@@ -169,13 +175,13 @@ StreamflowData_filtered_locations<-ggplot() +
   )
 #Streamflowdata_locations
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step3_Streamflowdata_locations_MediumSubset.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_MediumSubset.jpg")), 
        plot = StreamflowData_filtered_locations, 
        width = 8, height = 6, dpi = 300)  
 
 
 
-saveRDS(StreamflowData_filtered,'/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_MediumSubset_step3.rds')
+saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
 
 
 
@@ -227,7 +233,10 @@ library(Metrics)
 library(scales)
 
 
-StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds") #%>% 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+
+StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds")) #%>% 
 StreamflowData
 
 
@@ -308,7 +317,7 @@ for (i in seq(1, length(FinalData_cleaned_split), by = 18)) {
 
 Timelineplot1 <- (plot_list[[1]] + plot_list[[2]] )
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step3_Timelineplot1_LongSubset.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_LongSubset.jpg")), 
        plot = Timelineplot1, 
        width = 16, height = 8, dpi = 300)  
 
@@ -321,13 +330,16 @@ ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/
 
 
 ##make a map with all the stations 
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
 
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
-RiverNetwork<- "/Users/ahowl/Desktop/KGS Data analysis/rivers_ksrb/rivers_ksrb.shp"
+
+
+
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
-RiverNetwork_shp <- st_read(RiverNetwork)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
 watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
 RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
 combined_shp <- st_union(desoto_shp, watershed_shp)
@@ -354,10 +366,10 @@ StreamflowData_filtered_locations<-ggplot() +
   )
 #Streamflowdata_locations
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step3_Streamflowdata_locations_LongSubset.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_LongSubset.jpg")), 
        plot = StreamflowData_filtered_locations, 
        width = 8, height = 6, dpi = 300)  
 
 
 
-saveRDS(StreamflowData_filtered,'/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_LongSubset_step3.rds')
+saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_step3.rds"))

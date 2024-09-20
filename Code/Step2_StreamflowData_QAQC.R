@@ -39,8 +39,10 @@ require(gridExtra)
 library(Metrics)
 library(scales)
 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
 
-StreamflowData <- readRDS("/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_step1.rds") #%>% 
+StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_step1.rds"))
 StreamflowData
 
 
@@ -56,12 +58,15 @@ StreamflowData<- StreamflowData %>%  mutate(SamplingYears=map(streamflow_data,ex
 
 ##make a map with all the stations 
 
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
-RiverNetwork<- "/Users/ahowl/Desktop/KGS Data analysis/rivers_ksrb/rivers_ksrb.shp"
+
+
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
+
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
-RiverNetwork_shp <- st_read(RiverNetwork)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
 watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
 RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
 combined_shp <- st_union(desoto_shp, watershed_shp)
@@ -88,7 +93,7 @@ Streamflowdata_locations<-ggplot() +
   )
 #Streamflowdata_locations
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step2_Streamflowdata_locationsAll.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step2_Streamflowdata_locationsAll.jpg")), 
        plot = Streamflowdata_locations, 
        width = 8, height = 6, dpi = 300)  
 
@@ -133,13 +138,13 @@ Timelineplot2 <- (plot_list[[7]] + plot_list[[8]] + plot_list[[9]]) /
 Timelineplot3 <- (plot_list[[13]]+plot_list[[14]])
 #plot_list[[15]]
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step2_Timelineplot1.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step2_Timelineplot1.jpg")), 
        plot = Timelineplot1, 
        width = 14, height = 6, dpi = 300)  
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step2_Timelineplot2.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step2_Timelineplot2.jpg")), 
        plot = Timelineplot2, 
        width = 14, height = 6, dpi = 300)  
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step2_Timelineplot3.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,"Step2_Timelineplot3.jpg")), 
        plot = Timelineplot3, 
        width = 14, height = 6, dpi = 300)  
 
@@ -310,13 +315,15 @@ print(histogram_plot)
 
 
 
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
 
-desoto_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/DeSoto_shp/DeSoto.shp"
-watershed_shapefile_path <- "/Users/ahowl/Desktop/KGS Data analysis/WatershedBoundary_KN_20230113/watershed_bndry.shp"
-RiverNetwork<- "/Users/ahowl/Desktop/KGS Data analysis/rivers_ksrb/rivers_ksrb.shp"
+
+
 desoto_shp <- st_read(desoto_shapefile_path)
 watershed_shp <- st_read(watershed_shapefile_path)
-RiverNetwork_shp <- st_read(RiverNetwork)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
 watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
 RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
 combined_shp <- st_union(desoto_shp, watershed_shp)
@@ -343,7 +350,7 @@ filtered_tibble_locations<-ggplot() +
   )
 filtered_tibble_locations
 
-ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Step2_Streamflowdata_locations_lessthan10percentmiss.jpg', 
+ggsave(filename = (file.path(file_Path_Variable_O,'Step2_Streamflowdata_locations_lessthan10percentmiss.jpg')), 
        plot = filtered_tibble_locations, 
        width = 8, height = 6, dpi = 300)  # Optional: adjust width, height, and dpi as needed
 
@@ -351,4 +358,7 @@ ggsave(filename = '/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/
 
 
 
-saveRDS(filtered_tibble,'/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/streamflow_tibbles_Filtered_step2.rds')
+saveRDS(filtered_tibble, file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds"))
+
+
+
