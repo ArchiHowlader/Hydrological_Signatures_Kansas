@@ -176,6 +176,34 @@ AllYear_StreamflowData_NoCanalFk$streamflowUnit<- MMD
 
 
 
+for (i in 1:nrow(AllYear_StreamflowData_NoCanalFk)){
+  
+  CFS<- AllYear_StreamflowData_NoCanalFk$streamflow_data_CFS_MMD[[i]]
+  
+  p<- ggplot(data=CFS,aes(x=Date,y=mean_streamflow))+
+    geom_line()+
+      ggtitle('cfs')
+  q<- ggplot(data=CFS,aes(x=Date,y=mean_streamflow_mm_per_day))+
+    geom_line()+
+  ggtitle('mmd')
+  
+  C<- p+q
+  
+  file_name= file.path(file_Path_Variable_O, 'Step2a_ComparisonCFSMMD', paste0("combined_plot_", i, ".jpg"))
+  ggsave(filename=file_name,
+         plot=C,
+         width = 8, height = 6, dpi = 300)
+  
+  }
+  
+  
+
+
+
+
+
+
+
 # save that to rds 
 saveRDS(NoData, file = file.path(file_Path_Variable_O, "step2a_Nodata_Canal_WA.rds"))
 saveRDS(AllYear_StreamflowData_NoCanalFk, file = file.path(file_Path_Variable_O, "AllYear_StreamflowData_MMD.rds"))

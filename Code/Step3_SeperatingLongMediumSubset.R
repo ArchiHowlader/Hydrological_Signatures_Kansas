@@ -46,6 +46,13 @@ file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Se
 StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds")) #%>% 
 StreamflowData
 
+##remove the canal from StreamflowData
+canal_stations<- StreamflowData[grepl('canal',StreamflowData$station_name,ignore.case = TRUE),]
+AllYear_StreamflowData_NoCanal<- StreamflowData[!grepl('canal',StreamflowData$station_name,ignore.case = TRUE),]
+StreamflowData<-AllYear_StreamflowData_NoCanal
+saveRDS(StreamflowData,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds"))
+
+
 
 # Medium term: data on >90% of days between 1/1/1979 and 12/31/2023
 # Long term: data on >90% of days between 1/1/1944 and 12/31/2023
@@ -178,6 +185,16 @@ StreamflowData_filtered_locations<-ggplot() +
 ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_MediumSubset.jpg")), 
        plot = StreamflowData_filtered_locations, 
        width = 8, height = 6, dpi = 300)  
+
+
+#######filtering dates for the medium term subset
+###data on >90% of days between 1/1/1979 and 12/31/2023
+
+StreamflowData_filtered <- StreamflowData_filtered %>%
+  mutate(streamflow_data = map(streamflow_data, ~ .x %>%
+                                 filter(Date >= as.Date("1979-01-01") & Date <= as.Date("2023-12-31"))))
+
+StreamflowData_filtered
 
 
 
@@ -371,5 +388,13 @@ ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_location
        width = 8, height = 6, dpi = 300)  
 
 
+
+
+######filtering dates for the long term subset
+###data on >90% of days between 1/1/1944 and 12/31/2023
+
+StreamflowData_filtered <- StreamflowData_filtered %>%
+  mutate(streamflow_data = map(streamflow_data, ~.x %>%
+                                 filter(Date >= as.Date('1944-01-01') & Date <= as.Date('2023-12-31'))))
 
 saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_step3.rds"))

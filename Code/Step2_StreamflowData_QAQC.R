@@ -395,11 +395,6 @@ filtered_tibbleWP <- filtered_tibble %>%
 filtered_tibbleWP
 
 
-p <- ggplot(data = figWO, aes(x = Date, y = mean_streamflow)) +
-  geom_point() +
-  ggtitle(paste("Station", filtered_tibble$station_name[i], "- WO"))
-
-
 for (i in 1:nrow(filtered_tibble)){
   figWO<-filtered_tibble$streamflow_data[[i]]
   figWP<-filtered_tibbleWP$streamflow_data[[i]]
@@ -412,7 +407,7 @@ for (i in 1:nrow(filtered_tibble)){
   
   combined_plot <- p + q
   combined_plot
-  file_name <- file.path(file_Path_Variable_O, 'step2outputfig', paste0("combined_plot_", i, ".jpg"))
+  file_name <- file.path(file_Path_Variable_O, 'step2outputfig_Compare95PDataEachYearToWO', paste0("combined_plot_", i, ".jpg"))
   
   ggsave(filename = file_name,
          plot = combined_plot, 
@@ -420,6 +415,17 @@ for (i in 1:nrow(filtered_tibble)){
 }
 
 
+filtered_tibbleWP_DataOmit<- filtered_tibbleWP %>% filter(map_lgl(streamflow_data,~!is.null(.x)&&nrow(.x)>0))
 
-filtered_tibble<-filtered_tibbleWP
+
+##which statons are missing #check data to see if it really does not have data
+StationNotFound<- anti_join(filtered_tibbleWP,filtered_tibbleWP_DataOmit,by='station_name')
+StationNotFound
+
+filtered_tibble_selected <- filtered_tibble %>%
+  filter(station_name %in% StationNotFound$station_name)
+filtered_tibble_selected
+
+
+filtered_tibble<-filtered_tibbleWP_DataOmit
 saveRDS(filtered_tibble, file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds"))

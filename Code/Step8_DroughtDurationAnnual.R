@@ -51,8 +51,10 @@ AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_ti
 AllYear_StreamflowData
 
 
+finalData<- data.frame()
+for (i in nrow(streamflow_data)){
 #06827500
-streamflow_data<- AllYear_StreamflowData %>% filter(site_no=='06827500')
+streamflow_data<- AllYear_StreamflowData$streamflow_data[[i]]
 streamflow_data<- data.frame(streamflow_data$streamflow_data)
 streamflow_data$Date <- lubridate::as_date(streamflow_data$Date)  
 
@@ -137,3 +139,10 @@ DataF<-df_unique_years %>% select(Year,Total_day_2_F, Total_day_5_F , Total_day_
                                   Total_day_20_F , Total_day_30_F , Total_day_2_V , Total_day_5_V ,
                                   Total_day_10_V , Total_day_20_V , Total_day_30_V )
 DataF
+
+
+
+
+}
+
+
