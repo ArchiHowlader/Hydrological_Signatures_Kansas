@@ -276,7 +276,7 @@ histogram_plot_N <- ggplot(StreamflowData, aes(x = percent_missing)) +
     #axis.ticks = element_line(color = "black")  # Ensure tick marks are shown
   ) 
 
-print(histogram_plot_N)
+#print(histogram_plot_N)
 
 
 
@@ -348,7 +348,7 @@ filtered_tibble_locations<-ggplot() +
     axis.text = element_blank(),   # Remove axis labels
     axis.ticks = element_blank()   # Remove axis ticks
   )
-filtered_tibble_locations
+#filtered_tibble_locations
 
 ggsave(filename = (file.path(file_Path_Variable_O,'Step2_Streamflowdata_locations_lessthan10percentmiss.jpg')), 
        plot = filtered_tibble_locations, 
@@ -358,7 +358,68 @@ ggsave(filename = (file.path(file_Path_Variable_O,'Step2_Streamflowdata_location
 
 
 
+saveRDS(filtered_tibble, file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_witheachyears_step2.rds"))
+
+
+
+#####make sure each year have 95% data 
+
+
+
+
+filter_years_by_data_availability <- function(streamflow_data) {
+  streamflow_data %>%
+    mutate(year = year(Date)) %>%
+    group_by(year) %>%
+    summarise(
+      days_in_year = n(),
+      total_days_in_year = ifelse(leap_year(year), 366, 365),
+      percent_data = (days_in_year / total_days_in_year) * 100
+    ) %>%
+    filter(percent_data >= 95) %>%
+    select(year)
+}
+
+filtered_tibbleWP <- filtered_tibble %>%
+  mutate(
+    streamflow_data = map(streamflow_data, ~ {
+      available_years <- filter_years_by_data_availability(.x)
+      .x %>%
+        mutate(year = year(Date)) %>%
+        filter(year %in% available_years$year) %>%
+        select(-year)  
+    })
+  )
+
+
+filtered_tibbleWP
+
+
+p <- ggplot(data = figWO, aes(x = Date, y = mean_streamflow)) +
+  geom_point() +
+  ggtitle(paste("Station", filtered_tibble$station_name[i], "- WO"))
+
+
+for (i in 1:nrow(filtered_tibble)){
+  figWO<-filtered_tibble$streamflow_data[[i]]
+  figWP<-filtered_tibbleWP$streamflow_data[[i]]
+  
+  p<- ggplot(data=figWO, aes(x=Date,y=mean_streamflow))+
+    geom_point()
+  
+  q<- ggplot(data=figWP, aes(x=Date,y=mean_streamflow))+
+    geom_point()
+  
+  combined_plot <- p + q
+  combined_plot
+  file_name <- file.path(file_Path_Variable_O, 'step2outputfig', paste0("combined_plot_", i, ".jpg"))
+  
+  ggsave(filename = file_name,
+         plot = combined_plot, 
+         width = 8, height = 6, dpi = 300)  
+}
+
+
+
+filtered_tibble<-filtered_tibbleWP
 saveRDS(filtered_tibble, file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds"))
-
-
-
