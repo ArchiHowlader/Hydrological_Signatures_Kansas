@@ -45,17 +45,17 @@ file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Se
 file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
 
 
-AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds"))
-AllYear_StreamflowData
-
-
-
-MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
-MediumTerm_StreamflowData
-
-
-LongTerm_StreamflowData <-  readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_LongSubset_step3.rds"))
-LongTerm_StreamflowData
+# AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds"))
+# AllYear_StreamflowData
+# 
+# 
+# 
+# MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
+# MediumTerm_StreamflowData
+# 
+# 
+# LongTerm_StreamflowData <-  readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_LongSubset_step3.rds"))
+# LongTerm_StreamflowData
 
 
 
@@ -79,8 +79,19 @@ combined_shp_leaflet <- st_as_sf(combined_shp)
 
 ### All average 
 
-AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_step2.rds"))
+AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_step2.rds") )
 AllYear_StreamflowData
+
+
+MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_step3.rds"))
+MediumTerm_StreamflowData
+
+
+LongTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_step3.rds"))
+LongTerm_StreamflowData
+
+
+
 
 overall_average_streamflow_AllYear <- AllYear_StreamflowData %>%
   unnest(cols = streamflow_data) %>%
@@ -96,13 +107,37 @@ overall_average_streamflow_AllYear<- overall_average_streamflow_AllYear %>%
 
 
 
-overall_average_streamflow_MediumTerm <- overall_average_streamflow_AllYear %>%
-  filter(site_no %in% MediumTerm_StreamflowData$site_no)
+
+overall_average_streamflow_MediumTerm <- MediumTerm_StreamflowData %>%
+  unnest(cols = streamflow_data) %>%
+  group_by(site_no) %>%
+  summarise(OverallAvgStreamflow_cfs = mean(mean_streamflow, na.rm = TRUE)) %>%
+  ungroup()
+
+print(overall_average_streamflow_MediumTerm)
+
+overall_average_streamflow_MediumTerm<- overall_average_streamflow_MediumTerm %>% 
+  left_join(MediumTerm_StreamflowData, by='site_no')
 
 
 
-overall_average_streamflow_LongTerm <- overall_average_streamflow_AllYear %>%
-  filter(site_no %in% LongTerm_StreamflowData$site_no)
+
+
+
+
+
+
+overall_average_streamflow_LongTerm <- LongTerm_StreamflowData %>%
+  unnest(cols = streamflow_data) %>%
+  group_by(site_no) %>%
+  summarise(OverallAvgStreamflow_cfs = mean(mean_streamflow, na.rm = TRUE)) %>%
+  ungroup()
+
+print(overall_average_streamflow_LongTerm)
+
+overall_average_streamflow_LongTerm<- overall_average_streamflow_LongTerm %>% 
+  left_join(LongTerm_StreamflowData, by='site_no')
+
 
 
 
