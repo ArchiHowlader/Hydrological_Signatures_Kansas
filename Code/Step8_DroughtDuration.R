@@ -260,10 +260,8 @@ combined_shp <- st_union(desoto_shp, watershed_shp)
 combined_shp_leaflet <- st_as_sf(combined_shp)
 
 
-# Define thresholds and types
 thresholds <- c(2, 5, 10, 20, 30)
 types <- c("F", "V")  # 'F' for fixed, 'V' for variable
-# Calculate global max and min for Fixed (F) and Variable (V) types
 
 
 # Calculate global max and min for Fixed (F) and Variable (V) types for average drought duration
