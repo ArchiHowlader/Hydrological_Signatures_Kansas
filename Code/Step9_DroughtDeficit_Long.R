@@ -50,6 +50,20 @@ file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Se
 AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_step3.rds"))
 AllYear_StreamflowData
 
+#convert it cfs to cfd
+
+# Function to convert cfs to cfd
+convert_cfs_to_cfd <- function(streamflow_tibble) {
+  # Multiply the mean_streamflow values by 86400 (seconds in a day)
+  streamflow_tibble %>%
+    mutate(mean_streamflow = mean_streamflow * 86400)
+}
+
+AllYear_StreamflowData <- AllYear_StreamflowData %>%
+  mutate(streamflow_data = map(streamflow_data, convert_cfs_to_cfd))
+
+print(AllYear_StreamflowData)
+AllYear_StreamflowData$streamflow_data[1]
 
 ##Logical steps
 
@@ -77,7 +91,7 @@ AllYear_StreamflowData
 threshold_values_df <- data.frame()
 
 for (i in 1:nrow(AllYear_StreamflowData)) {
-  i=8
+  
   streamflow_data <- data.frame(AllYear_StreamflowData$streamflow_data[[i]])
   streamflow_data$Date <- lubridate::as_date(streamflow_data$Date)  
   
@@ -235,19 +249,19 @@ maximum<-max(threshold_values_df_Fig$threshold_fixed_2)
 color_palette <- c("#d73027", "#fc8d59", "#fee08b", "#d9ef8b", "#91cf60", "#1a9850", "#4575b4", "#313695")  # A strong color palette from red to green, with added blue shades
 
 threshold_values_df_Map <- ggplot() +
-  geom_sf(data = combined_shp_leaflet, fill = "yellow", color = "blue", size = 0.5) +
-  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  # Adjust color and size as needed
   geom_point(data = threshold_values_df_Fig, 
              aes(x = station_lon, y = station_lat, 
                  color = threshold_fixed_2, 
                  size = threshold_fixed_2),  # Map both color and size to streamflow
              alpha = 0.8) +
-  scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfs)", thresholds, types),
+  scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfd)", thresholds, types),
                         limits = c(minimum, maximum), 
                         breaks = seq(minimum, maximum, length.out = 8)) +  # Set the color scale limits from 0 to 10,000
-  scale_size_continuous(range = c(2, 10), name = "Drought Deficit(cfs)", 
+  scale_size_continuous(range = c(2, 10), name = "Drought Deficit(cfd)", 
                         limits = c(minimum, maximum)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
-  labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfs)",thresholds,types)) +
+  labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfd)",thresholds,types)) +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
@@ -293,19 +307,19 @@ for (Threshold in thresholds) {
     col_name <- ifelse(Type == "F", paste0("threshold_fixed_", Threshold), paste0("threshold_DOY_", Threshold))
     
     threshold_values_df_Map <- ggplot() +
-      geom_sf(data = combined_shp_leaflet, fill = "yellow", color = "blue", size = 0.5) +
-      geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +
+      geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+      geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +
       geom_point(data = threshold_values_df_Fig, 
                  aes(x = station_lon, y = station_lat, 
                      color = .data[[col_name]], 
                      size = .data[[col_name]]), 
                  alpha = 0.8) +
-      scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfs)", Threshold, Type),
+      scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfd)", Threshold, Type),
                             limits = c(global_min, global_max), 
                             breaks = seq(global_min, global_max, length.out = 8)) +
-      scale_size_continuous(range = c(2, 10), name = "Drought Deficit (cfs)", 
+      scale_size_continuous(range = c(2, 10), name = "Drought Deficit (cfd)", 
                             limits = c(global_min, global_max)) +
-      labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfs)", Threshold, Type)) +
+      labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfd)", Threshold, Type)) +
       theme_minimal() +
       theme(
         plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
@@ -339,19 +353,19 @@ for (Threshold in thresholds) {
     
     # Create the map
     threshold_values_df_Map <- ggplot() +
-      geom_sf(data = combined_shp_leaflet, fill = "yellow", color = "blue", size = 0.5) +
-      geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +
+      geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+      geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +
       geom_point(data = threshold_values_df_Fig, 
                  aes(x = station_lon, y = station_lat, 
                      color = .data[[col_name]], 
                      size = .data[[col_name]]), 
                  alpha = 0.8) +
-      scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfs)", Threshold, Type),
+      scale_color_gradientn(colors = color_palette, name = paste("Drought Deficit (cfd)", Threshold, Type),
                             limits = c(global_min, global_max), 
                             breaks = seq(global_min, global_max, length.out = 8)) +
-      scale_size_continuous(range = c(2, 10), name = "Drought Deficit (cfs)", 
+      scale_size_continuous(range = c(2, 10), name = "Drought Deficit (cfd)", 
                             limits = c(global_min, global_max)) +
-      labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfs)", Threshold, Type)) +
+      labs(title = paste("Streamflow Data Locations (All) \nDrought Deficit (cfd)", Threshold, Type)) +
       theme_minimal() +
       theme(
         plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
