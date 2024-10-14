@@ -1,0 +1,1298 @@
+cat("\014") 
+rm(list=ls())
+library(dataRetrieval)
+library(sf)
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(tibble)
+library(ggplot2)
+library(base64enc)
+library(lubridate)  
+library(patchwork)
+library(ggplot2)
+library(grid)
+library(stringr)
+library(wql)
+library(ggplot2)
+library(grid)
+library(lubridate)
+library(measurements)
+library(dplyr)
+library(tidyverse)
+library(openair)
+library(heatwaveR)
+library(data.table)
+library(ggplot2)
+library(grid)
+library(lubridate)
+library(measurements)
+library(dplyr)
+library(tidyverse)
+library(openair)
+library(heatwaveR)
+library(data.table)
+require(methods)
+library(investr)
+require(gridExtra)
+library(Metrics)
+library(scales)
+
+# change file_Path_Variable 
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+AllYear_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "AllYear_StreamflowData_MMD.rds") )
+AllYear_StreamflowData
+
+
+MediumTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_MMD_step3.rds"))
+MediumTerm_StreamflowData
+
+
+LongTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_MMD_step3.rds"))
+LongTerm_StreamflowData
+
+# unnested_data <- AllYear_StreamflowData %>%
+#   unnest(cols = streamflow_data)
+# 
+# str(unnested_data)
+# 
+# max_streamflow <- unnested_data %>%
+#   summarise(max_streamflow = max(mean_streamflow_mm_per_day, na.rm = TRUE))  # Replace 'value' with the actual column name inside streamflow_data
+# 
+# print(max_streamflow)
+# 
+# 1.5<- max_streamflow$max_streamflow
+
+# 
+# 
+# max(seasonal_average_streamflow_pivot_LongTerm$MeanFall)
+# max(seasonal_average_streamflow_pivot_LongTerm$MeanSpring)
+# max(seasonal_average_streamflow_pivot_LongTerm$MeanSummer)
+# max(seasonal_average_streamflow_pivot_LongTerm$MeanWinter)
+# 
+# 
+# max(seasonal_average_streamflow_pivot_MediumTerm$MeanFall)
+# max(seasonal_average_streamflow_pivot_MediumTerm$MeanSpring)
+# max(seasonal_average_streamflow_pivot_MediumTerm$MeanSummer)
+# max(seasonal_average_streamflow_pivot_MediumTerm$MeanWinter)
+
+
+
+############Figure 
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
+
+desoto_shp <- st_read(desoto_shapefile_path)
+watershed_shp <- st_read(watershed_shapefile_path)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
+watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
+RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
+combined_shp <- st_union(desoto_shp, watershed_shp)
+#combined_shp <- st_union(combined_shp, RiverNetwork_shp)
+combined_shp_leaflet <- st_as_sf(combined_shp)
+
+seasonal_average_streamflow <- AllYear_StreamflowData %>%
+  unnest(cols = streamflow_data) %>%
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  mutate(Season = case_when(
+    Month %in% c(9, 10, 11) ~ "Fall",
+    Month %in% c(12, 1, 2)  ~ "Winter",
+    Month %in% c(3, 4, 5)   ~ "Spring",
+    Month %in% c(6, 7, 8)   ~ "Summer"
+  )) %>%
+  group_by(site_no, Season) %>%
+  summarise(MeanSeasonalQ_cfs = mean(mean_streamflow_mm_per_day, na.rm = TRUE)) %>%
+  ungroup()
+
+seasonal_average_streamflow_pivot <- seasonal_average_streamflow %>%
+  pivot_wider(names_from = Season, values_from = MeanSeasonalQ_cfs, 
+              names_prefix = "Mean", values_fill = NA)
+
+print(seasonal_average_streamflow_pivot)
+
+seasonal_average_streamflow_pivot<- seasonal_average_streamflow_pivot %>% 
+  left_join(AllYear_StreamflowData, by='site_no')
+
+
+seasonal_average_streamflow_pivot<- seasonal_average_streamflow_pivot %>% 
+  select(MeanFall, MeanSpring ,MeanSummer, MeanWinter ,station_name ,site_no,station_lat, station_lon)
+#check data 
+
+# 
+# l=readRDS(file.path(file_Path_Variable_O,"LongTerm_StreamflowData_Annual_step4.rds"))
+# c=l %>% filter(site_no==seasonal_average_streamflow_pivot$site_no[2])
+# mean(c$MeanSummer)
+
+
+seasonal_average_streamflow_pivot<- na.omit(seasonal_average_streamflow_pivot)
+
+max(seasonal_average_streamflow_pivot$MeanFall)
+
+overall_average_streamflow_LongTerm_Map_MeanFall <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanFall, 
+                 size = MeanFall),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanFall (MMD)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanFall_AllStation.jpg")), 
+#        plot = overall_average_streamflow_LongTerm_Map_MeanFall, 
+#        width = 8, height = 6, dpi = 300)
+# 
+
+
+
+
+
+
+overall_average_streamflow_LongTerm_Map_MeanSummer <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanSummer, 
+                 size = MeanSummer),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSummer (MMD)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSummer_AllStation.jpg")), 
+#        plot = overall_average_streamflow_LongTerm_Map_MeanSummer, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_LongTerm_Map_MeanSpring<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanSpring, 
+                 size = MeanSpring),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSpring (MMD)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSpring_AllStation.jpg")), 
+#        plot = overall_average_streamflow_LongTerm_Map_MeanSpring, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_LongTerm_Map_MeanWinter<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanWinter, 
+                 size = MeanWinter),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanWinter (MMD)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanWinter_AllStation.jpg")), 
+#        plot = overall_average_streamflow_LongTerm_Map_MeanWinter, 
+#        width = 8, height = 6, dpi = 300)
+# 
+
+
+
+
+
+
+SeasonalAveragePlot<- (overall_average_streamflow_LongTerm_Map_MeanFall+overall_average_streamflow_LongTerm_Map_MeanSummer)/
+  (overall_average_streamflow_LongTerm_Map_MeanWinter+overall_average_streamflow_LongTerm_Map_MeanSpring)
+
+
+
+
+AllYear_StreamflowData<- na.omit(AllYear_StreamflowData)
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_SeasonalAveragePlot_AllYear_AllStation.jpg")), 
+#        plot = SeasonalAveragePlot, 
+#        width = 16, height = 8, dpi = 300)
+
+
+######Annual seasonal trend for the all data 
+
+all_years_data<-AllYear_StreamflowData
+
+process_station <- function(station_data, station_name) {
+  k <- data.frame(station_data)
+  k <- k %>%
+    mutate(
+      Date = as.Date(Date),  # Convert Date column to Date type
+      month = month(Date),   # Extract the month
+      year = year(Date),     # Extract the year
+      season = case_when(
+        month %in% c(12, 1, 2) ~ "Winter",
+        month %in% c(3, 4, 5) ~ "Spring",
+        month %in% c(6, 7, 8) ~ "Summer",
+        month %in% c(9, 10, 11) ~ "Fall"
+      )
+    )
+  
+  seasonal_trend <- k %>%
+    group_by(year, season) %>%
+    summarise(mean_streamflow = mean(mean_streamflow_mm_per_day, na.rm = TRUE))
+  
+  # Plot the seasonal trends
+  # ggplot(seasonal_trend, aes(x = year, y = mean_streamflow, color = season)) +
+  #   geom_line() +
+  #   geom_point() +
+  #   labs(title = paste("Seasonal Trend of Streamflow for", station_name),
+  #        x = "Year", y = "Mean Streamflow") +
+  #   theme_minimal(base_size = 20) +
+  #   ggsave(paste0("seasonal_trend_", station_name, ".png"), width = 8, height = 6)  # Save the plot
+  # 
+  results <- seasonal_trend %>%
+    group_by(season) %>%
+    summarize(
+      n = n(),  
+      mann_kendall = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$tau, scientific = FALSE) else NA,
+      p_value = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$sl, scientific = FALSE) else NA
+    )
+  
+  return(results)
+}
+
+
+
+all_results <- list()
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  all_results[[station_name]] <- station_results
+  
+  print(paste("Results for", station_name))
+  print(station_results)
+}
+
+all_results <- list()
+
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  
+  all_results[[i]] <- station_results
+}
+
+mann_kendall_tibble <- tibble(
+  station_name = all_years_data$station_name,
+  mann_kendall_results = all_results
+)
+
+print(mann_kendall_tibble)
+
+all_years_data <- all_years_data %>%
+  left_join(mann_kendall_tibble, by = "station_name")
+
+print(all_years_data)
+
+mann_kendall_tibble_unnest<- mann_kendall_tibble %>%  unnest(mann_kendall_results)
+
+
+
+########################medium term
+
+
+seasonal_average_streamflow_MediumTerm <- MediumTerm_StreamflowData %>%
+  unnest(cols = streamflow_data) %>%
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  mutate(Season = case_when(
+    Month %in% c(9, 10, 11) ~ "Fall",
+    Month %in% c(12, 1, 2)  ~ "Winter",
+    Month %in% c(3, 4, 5)   ~ "Spring",
+    Month %in% c(6, 7, 8)   ~ "Summer"
+  )) %>%
+  group_by(site_no, Season) %>%
+  summarise(MeanSeasonalQ_cfs = mean(mean_streamflow_mm_per_day, na.rm = TRUE)) %>%
+  ungroup()
+
+seasonal_average_streamflow_MediumTerm_pivot <- seasonal_average_streamflow_MediumTerm %>%
+  pivot_wider(names_from = Season, values_from = MeanSeasonalQ_cfs, 
+              names_prefix = "Mean", values_fill = NA)
+
+print(seasonal_average_streamflow_MediumTerm_pivot)
+
+seasonal_average_streamflow_MediumTerm_pivot<- seasonal_average_streamflow_MediumTerm_pivot %>% 
+  left_join(MediumTerm_StreamflowData, by='site_no')
+
+
+seasonal_average_streamflow_MediumTerm_pivot<- seasonal_average_streamflow_MediumTerm_pivot %>% 
+  select(MeanFall, MeanSpring ,MeanSummer, MeanWinter ,station_name ,site_no,station_lat, station_lon)
+#check data 
+
+# 
+# l=readRDS(file.path(file_Path_Variable_O,"LongTerm_StreamflowData_Annual_step4.rds"))
+# c=l %>% filter(site_no==seasonal_average_streamflow_pivot$site_no[2])
+# mean(c$MeanSummer)
+
+
+seasonal_average_streamflow_MediumTerm_pivot<- na.omit(seasonal_average_streamflow_MediumTerm_pivot)
+
+seasonal_average_streamflow_pivot_MediumTerm<- seasonal_average_streamflow_MediumTerm_pivot
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanFall_MediumTerm <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_MediumTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanFall, 
+                 size = MeanFall),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanFall (MMD)\n Medium Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanFall_MediumTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanFall_MediumTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanSummer_MediumTerm <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_MediumTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanSummer, 
+                 size = MeanSummer),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSummer (MMD)\n Medium Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSummer__MediumTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanSummer_MediumTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanSpring_MediumTerm<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_MediumTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanSpring, 
+                 size = MeanSpring),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSpring (MMD) \n Medium Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSpring_AllStation_MediumTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanSpring_MediumTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanWinter_MediumTerm<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_MediumTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanWinter, 
+                 size = MeanWinter),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanWinter (MMD)\n Medium Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanWinter__MediumTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanWinter_MediumTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+SeasonalAveragePlot_MediumTerm<- (overall_average_streamflow_Map_MeanFall_MediumTerm+overall_average_streamflow_Map_MeanSummer_MediumTerm)/
+  (overall_average_streamflow_Map_MeanWinter_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm)
+
+
+
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_SeasonalAveragePlot_AllYear__MediumTerm.jpg")), 
+#        plot = SeasonalAveragePlot_MediumTerm, 
+#        width = 16, height = 8, dpi = 300)
+# 
+
+
+###annual seasonal trend for medium term
+
+
+
+all_years_data<-MediumTerm_StreamflowData
+
+process_station <- function(station_data, station_name) {
+  k <- data.frame(station_data)
+  k <- k %>%
+    mutate(
+      Date = as.Date(Date),  # Convert Date column to Date type
+      month = month(Date),   # Extract the month
+      year = year(Date),     # Extract the year
+      season = case_when(
+        month %in% c(12, 1, 2) ~ "Winter",
+        month %in% c(3, 4, 5) ~ "Spring",
+        month %in% c(6, 7, 8) ~ "Summer",
+        month %in% c(9, 10, 11) ~ "Fall"
+      )
+    )
+  
+  seasonal_trend <- k %>%
+    group_by(year, season) %>%
+    summarise(mean_streamflow = mean(mean_streamflow_mm_per_day, na.rm = TRUE))
+  
+  # Plot the seasonal trends
+  # ggplot(seasonal_trend, aes(x = year, y = mean_streamflow, color = season)) +
+  #   geom_line() +
+  #   geom_point() +
+  #   labs(title = paste("Seasonal Trend of Streamflow for", station_name),
+  #        x = "Year", y = "Mean Streamflow") +
+  #   theme_minimal(base_size = 20) +
+  #   ggsave(paste0("seasonal_trend_", station_name, ".png"), width = 8, height = 6)  # Save the plot
+  # 
+  results <- seasonal_trend %>%
+    group_by(season) %>%
+    summarize(
+      n = n(),  
+      mann_kendall = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$tau, scientific = FALSE) else NA,
+      p_value = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$sl, scientific = FALSE) else NA
+    )
+  
+  return(results)
+}
+
+
+
+all_results <- list()
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  all_results[[station_name]] <- station_results
+  
+  print(paste("Results for", station_name))
+  print(station_results)
+}
+
+all_results <- list()
+
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  
+  all_results[[i]] <- station_results
+}
+
+mann_kendall_tibble_MediumTerm <- tibble(
+  station_name = all_years_data$station_name,
+  mann_kendall_results = all_results
+)
+
+print(mann_kendall_tibble_MediumTerm)
+
+mann_kendall_tibble_MediumTerm <- all_years_data %>%
+  left_join(mann_kendall_tibble_MediumTerm, by = "station_name")
+
+print(mann_kendall_tibble_MediumTerm)
+
+mann_kendall_tibble_MediumTerm<- mann_kendall_tibble_MediumTerm %>% select(station_name,site_no,station_lat,station_lon,mann_kendall_results)
+
+mann_kendall_tibble_unnest_MediumTerm<- mann_kendall_tibble_MediumTerm %>%  unnest(mann_kendall_results)
+mann_kendall_tibble_unnest_MediumTerm
+
+
+
+tau_MediumTerm <- mann_kendall_tibble_unnest_MediumTerm
+
+tau_MediumTerm <- tau_MediumTerm %>%
+  mutate(significant = ifelse(p_value < 0.05, "Significant", "NotSignificant"))
+
+
+print(unique(tau_MediumTerm$mann_kendall))
+
+tau_MediumTerm <- tau_MediumTerm %>%
+  mutate(mann_kendall = as.numeric(mann_kendall))
+
+str(tau_MediumTerm)
+# > min(tau_LongTerm$mann_kendall)
+# [1] -0.8373417
+# > max(tau_LongTerm$mann_kendall)
+# [1] 0.2519026
+
+# min(tau_MediumTerm$mann_kendall)
+# max(tau_MediumTerm$mann_kendall)
+# 
+# min(tau_LongTerm$mann_kendall)
+# max(tau_LongTerm$mann_kendall)
+
+minV=-0.8373417
+maxV=0.3090909  
+  
+kendall_tau_map_Fall_Medium <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_MediumTerm %>% filter(season == "Fall"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Medium Term Streamflow Data Locations (Fall) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Create the Spring trend map for Medium Term
+kendall_tau_map_Spring_Medium <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_MediumTerm %>% filter(season == "Spring"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Medium Term Streamflow Data Locations (Spring) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Create the Summer trend map for Medium Term
+kendall_tau_map_Summer_Medium <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_MediumTerm %>% filter(season == "Summer"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Medium Term Streamflow Data Locations (Summer) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Create the Winter trend map for Medium Term
+kendall_tau_map_Winter_Medium <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_MediumTerm %>% filter(season == "Winter"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Medium Term Streamflow Data Locations (Winter) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Combine the plots into a single figure
+MediumTermSeasonalTrend <- kendall_tau_map_Fall_Medium + kendall_tau_map_Spring_Medium + kendall_tau_map_Summer_Medium + kendall_tau_map_Winter_Medium
+
+# Save the Medium Term Seasonal Trend figure
+ggsave(filename = file.path(file_Path_Variable_O, "Step6a_MediumTerm_SeasonalTrend.jpg"),
+       plot = MediumTermSeasonalTrend,
+       width = 20, height = 16, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################Long term
+
+
+
+
+
+
+
+seasonal_average_streamflow_LongTerm <- LongTerm_StreamflowData %>%
+  unnest(cols = streamflow_data) %>%
+  mutate(Year = year(Date), Month = month(Date)) %>%
+  mutate(Season = case_when(
+    Month %in% c(9, 10, 11) ~ "Fall",
+    Month %in% c(12, 1, 2)  ~ "Winter",
+    Month %in% c(3, 4, 5)   ~ "Spring",
+    Month %in% c(6, 7, 8)   ~ "Summer"
+  )) %>%
+  group_by(site_no, Season) %>%
+  summarise(MeanSeasonalQ_cfs = mean(mean_streamflow_mm_per_day, na.rm = TRUE)) %>%
+  ungroup()
+
+seasonal_average_streamflow_LongTerm_pivot <- seasonal_average_streamflow_LongTerm %>%
+  pivot_wider(names_from = Season, values_from = MeanSeasonalQ_cfs, 
+              names_prefix = "Mean", values_fill = NA)
+
+print(seasonal_average_streamflow_LongTerm_pivot)
+
+seasonal_average_streamflow_LongTerm_pivot<- seasonal_average_streamflow_LongTerm_pivot %>% 
+  left_join(LongTerm_StreamflowData, by='site_no')
+
+
+seasonal_average_streamflow_LongTerm_pivot<- seasonal_average_streamflow_LongTerm_pivot %>% 
+  select(MeanFall, MeanSpring ,MeanSummer, MeanWinter ,station_name ,site_no,station_lat, station_lon)
+#check data 
+
+# 
+# l=readRDS(file.path(file_Path_Variable_O,"LongTerm_StreamflowData_Annual_step4.rds"))
+# c=l %>% filter(site_no==seasonal_average_streamflow_pivot$site_no[2])
+# mean(c$MeanSummer)
+
+
+seasonal_average_streamflow_LongTerm_pivot<- na.omit(seasonal_average_streamflow_LongTerm_pivot)
+
+seasonal_average_streamflow_pivot_LongTerm<- seasonal_average_streamflow_LongTerm_pivot
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanFall_LongTerm <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_LongTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanFall, 
+                 size = MeanFall),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanFall (MMD)\n long Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanFall_LongTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanFall_LongTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanSummer_LongTerm <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_LongTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color = MeanSummer, 
+                 size = MeanSummer),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSummer (MMD)\n long Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSummer__LongTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanSummer_LongTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanSpring_LongTerm<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_LongTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanSpring, 
+                 size = MeanSpring),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanSpring (MMD) \n long Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanSpring_AllStation_LongTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanSpring_LongTerm, 
+#        width = 8, height = 6, dpi = 300)
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+overall_average_streamflow_Map_MeanWinter_LongTerm<- ggplot() +
+  geom_sf(data = combined_shp_leaflet, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "red", size = 0.7) +  # Adjust color and size as needed
+  geom_point(data = seasonal_average_streamflow_pivot_LongTerm, 
+             aes(x = station_lon, y = station_lat, 
+                 color =MeanWinter, 
+                 size = MeanWinter),  # Map both color and size to streamflow
+             alpha = 0.8) +
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the color scale limits from 0 to 10,000
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
+                        limits = c(0, 1.5)) +  # Set the size scale limits from 0 to 10,000  # Titles and labels
+  labs(title = "Streamflow Data Locations \n MeanWinter (MMD)\n Long Term") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.position = "right",
+    axis.title = element_blank(),  # Remove axis titles
+    axis.text = element_blank(),   # Remove axis labels
+    axis.ticks = element_blank()   # Remove axis ticks
+  )
+
+
+# ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanWinter__LongTerm.jpg")), 
+#        plot = overall_average_streamflow_Map_MeanWinter_LongTerm, 
+#        width = 8, height = 6, dpi = 300)
+
+
+
+SeasonalAveragePlot_MediumTerm<- (overall_average_streamflow_Map_MeanFall_MediumTerm+overall_average_streamflow_Map_MeanSummer_MediumTerm)/
+  (overall_average_streamflow_Map_MeanWinter_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm)
+
+
+SeasonalAveragePlot_LongTerm<- (overall_average_streamflow_Map_MeanFall_LongTerm+overall_average_streamflow_Map_MeanSummer_LongTerm)/
+  (overall_average_streamflow_Map_MeanWinter_LongTerm+overall_average_streamflow_Map_MeanSpring_LongTerm)
+
+
+SeasonalAveragePlot<- (overall_average_streamflow_Map_MeanFall_MediumTerm+overall_average_streamflow_Map_MeanSummer_MediumTerm+
+                         overall_average_streamflow_Map_MeanWinter_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm)/
+  (overall_average_streamflow_Map_MeanFall_LongTerm+overall_average_streamflow_Map_MeanSummer_LongTerm+
+     overall_average_streamflow_Map_MeanWinter_LongTerm+overall_average_streamflow_Map_MeanSpring_LongTerm)
+
+
+##check
+
+SeasonalAveragePlot<- (overall_average_streamflow_Map_MeanFall_MediumTerm+overall_average_streamflow_Map_MeanSummer_MediumTerm+
+                         overall_average_streamflow_Map_MeanWinter_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm+overall_average_streamflow_Map_MeanSpring_MediumTerm)/
+  (overall_average_streamflow_Map_MeanFall_LongTerm+overall_average_streamflow_Map_MeanSummer_LongTerm+
+     overall_average_streamflow_Map_MeanWinter_LongTerm+overall_average_streamflow_Map_MeanSpring_LongTerm+overall_average_streamflow_Map_MeanSpring_LongTerm+overall_average_streamflow_Map_MeanSpring_LongTerm)
+
+
+
+
+ggsave(filename =(file.path(file_Path_Variable_O,"Step6a_SeasonalAveragePlot_AllYear_MMD.jpg")),
+       plot = SeasonalAveragePlot,
+       width = 24, height = 20, dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###########trend 
+
+
+all_years_data<-LongTerm_StreamflowData
+
+process_station <- function(station_data, station_name) {
+  k <- data.frame(station_data)
+  k <- k %>%
+    mutate(
+      Date = as.Date(Date),  # Convert Date column to Date type
+      month = month(Date),   # Extract the month
+      year = year(Date),     # Extract the year
+      season = case_when(
+        month %in% c(12, 1, 2) ~ "Winter",
+        month %in% c(3, 4, 5) ~ "Spring",
+        month %in% c(6, 7, 8) ~ "Summer",
+        month %in% c(9, 10, 11) ~ "Fall"
+      )
+    )
+  
+  seasonal_trend <- k %>%
+    group_by(year, season) %>%
+    summarise(mean_streamflow = mean(mean_streamflow_mm_per_day, na.rm = TRUE))
+  
+  # Plot the seasonal trends
+  # ggplot(seasonal_trend, aes(x = year, y = mean_streamflow, color = season)) +
+  #   geom_line() +
+  #   geom_point() +
+  #   labs(title = paste("Seasonal Trend of Streamflow for", station_name),
+  #        x = "Year", y = "Mean Streamflow") +
+  #   theme_minimal(base_size = 20) +
+  #   ggsave(paste0("seasonal_trend_", station_name, ".png"), width = 8, height = 6)  # Save the plot
+  # 
+  results <- seasonal_trend %>%
+    group_by(season) %>%
+    summarize(
+      n = n(),  
+      mann_kendall = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$tau, scientific = FALSE) else NA,
+      p_value = if(n() >= 3) format(Kendall::MannKendall(mean_streamflow)$sl, scientific = FALSE) else NA
+    )
+  
+  return(results)
+}
+
+
+
+all_results <- list()
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  all_results[[station_name]] <- station_results
+  
+  print(paste("Results for", station_name))
+  print(station_results)
+}
+
+all_results <- list()
+
+for (i in 1:nrow(all_years_data)) {
+  station_name <- all_years_data$station_name[i]
+  streamflow_data <- all_years_data$streamflow_data[[i]]  
+  
+  station_results <- process_station(streamflow_data, station_name)
+  
+  all_results[[i]] <- station_results
+}
+
+mann_kendall_tibble_LongTerm <- tibble(
+  station_name = all_years_data$station_name,
+  mann_kendall_results = all_results
+)
+
+print(mann_kendall_tibble_LongTerm)
+
+mann_kendall_tibble_LongTerm <- all_years_data %>%
+  left_join(mann_kendall_tibble_LongTerm, by = "station_name")
+
+print(mann_kendall_tibble_LongTerm)
+
+mann_kendall_tibble_LongTerm<- mann_kendall_tibble_LongTerm %>% select(station_name,site_no,station_lat,station_lon,mann_kendall_results)
+
+mann_kendall_tibble_unnest_LongTerm<- mann_kendall_tibble_LongTerm %>%  unnest(mann_kendall_results)
+mann_kendall_tibble_unnest_LongTerm
+
+
+
+tau_LongTerm<- mann_kendall_tibble_unnest_LongTerm
+
+tau_LongTerm <- tau_LongTerm %>%
+  mutate(significant = ifelse(p_value < 0.05, "Significant", "NotSignificant"))
+
+
+# Convert mann_kendall to numeric (force conversion and handle non-numeric values as NA)
+tau_LongTerm <- tau_LongTerm %>%
+  mutate(mann_kendall = as.numeric(mann_kendall))
+
+# Verify the conversion was successful
+str(tau_LongTerm)
+
+# Create the Fall trend map
+kendall_tau_map_Fall <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_LongTerm %>% filter(season == "Fall"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  # Apply abs() to the numeric mann_kendall
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  # Adjust limits as per data
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Longterm Streamflow Data Locations (Fall) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Save the Fall trend map
+# ggsave(filename = file.path(file_Path_Variable_O, "Step6a_FallTrend.jpg"),
+#        plot = kendall_tau_map_Fall,
+#        width = 14, height = 10, dpi = 300)
+
+# Create the Spring trend map
+kendall_tau_map_Spring <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_LongTerm %>% filter(season == "Spring"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Longterm Streamflow Data Locations (Spring) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Create the Summer trend map
+kendall_tau_map_Summer <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_LongTerm %>% filter(season == "Summer"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Longterm Streamflow Data Locations (Summer) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+# Create the Winter trend map
+kendall_tau_map_Winter <- ggplot() +
+  geom_sf(data = combined_shp_leaflet, fill = NA, color = "blue", size = 0.5) +
+  geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
+  geom_point(data = tau_LongTerm %>% filter(season == "Winter"), 
+             aes(x = station_lon, y = station_lat, 
+                 color = mann_kendall, 
+                 fill = significant, 
+                 shape = significant,  
+                 size = abs(mann_kendall)),  
+             alpha = 0.8, stroke = 3) + 
+  scale_color_viridis_c(option = "plasma", name = "Tau Value", limits = c(minV, maxV)) +  
+  scale_size_continuous(range = c(2, 10), name = "Tau Magnitude", limits = c(0,1)) +  
+  scale_shape_manual(values = c("Significant" = 21, "NotSignificant" = 1), name = "Significance") + 
+  scale_fill_manual(values = c("Significant" = "black", "NotSignificant" = "white"), guide = "none") +  
+  labs(title = "Longterm Streamflow Data Locations (Winter) \nKendall Tau Values and Significance") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    legend.position = "right",
+    axis.title = element_blank(),  
+    axis.text = element_blank(),   
+    axis.ticks = element_blank()   
+  )
+
+
+LongTermSeasonalTrend<- kendall_tau_map_Fall+kendall_tau_map_Spring+kendall_tau_map_Summer+kendall_tau_map_Winter
+MediumTermSeasonalTrend <- kendall_tau_map_Fall_Medium + kendall_tau_map_Spring_Medium + kendall_tau_map_Summer_Medium + kendall_tau_map_Winter_Medium
+
+# SeasonalTrend <- (kendall_tau_map_Fall_Medium + kendall_tau_map_Spring_Medium + kendall_tau_map_Summer_Medium + kendall_tau_map_Winter_Medium) /
+#   (kendall_tau_map_Fall + kendall_tau_map_Spring + kendall_tau_map_Summer + kendall_tau_map_Winter) 
+
+
+SeasonalTrend <- (kendall_tau_map_Fall_Medium + kendall_tau_map_Fall + kendall_tau_map_Summer_Medium + kendall_tau_map_Summer) /
+  (kendall_tau_map_Spring_Medium + kendall_tau_map_Spring + kendall_tau_map_Winter_Medium + kendall_tau_map_Winter) 
+
+
+ggsave(filename = file.path(file_Path_Variable_O, "Step6a_SeasonalTrend_MMD_N.jpg"),
+       plot = SeasonalTrend,
+       width = 30, height = 20,dpi = 300)

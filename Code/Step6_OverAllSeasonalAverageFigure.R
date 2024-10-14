@@ -133,7 +133,6 @@ overall_average_streamflow_LongTerm_Map_MeanFall <- ggplot() +
     axis.ticks = element_blank()   # Remove axis ticks
   )
 
-print(overall_average_streamflow_LongTerm_Map_MeanFall)
 
 ggsave(filename =(file.path(file_Path_Variable_O,"Step6_overall_average_streamflow_AllYear_Map_MeanFall_AllStation.jpg")), 
        plot = overall_average_streamflow_LongTerm_Map_MeanFall, 
