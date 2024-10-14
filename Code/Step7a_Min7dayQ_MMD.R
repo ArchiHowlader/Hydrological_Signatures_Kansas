@@ -59,6 +59,19 @@ MediumTerm_StreamflowData
 LongTerm_StreamflowData <- readRDS(file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_MMD_step3.rds"))
 LongTerm_StreamflowData
 
+# Filtering for LongTerm_StreamflowData
+LongTerm_StreamflowData$streamflow_data <- lapply(LongTerm_StreamflowData$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
+
+# Repeat similarly for other datasets
+AllYear_StreamflowData$streamflow_data <- lapply(AllYear_StreamflowData$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
+
+MediumTerm_StreamflowData$streamflow_data <- lapply(MediumTerm_StreamflowData$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
 
 
 AllYear_StreamflowData_7DayAvg <- AllYear_StreamflowData %>%
@@ -382,7 +395,7 @@ combined_shp_leaflet <- st_as_sf(combined_shp)
 
 overall_Min7_streamflow_MediumTerm<- MediumTerm_Min_7DayStreamflow %>% 
   group_by(site_no) %>% 
-  summarise(Overall_Min_7DayStreamflow = (min(Min_7DayStreamflow, na.rm = TRUE))) %>%
+  summarise(OverallAverage_Min_7DayStreamflow = (mean(Min_7DayStreamflow, na.rm = TRUE))) %>%
   ungroup()
 
 overall_Min7_streamflow_MediumTerm
