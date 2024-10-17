@@ -412,10 +412,11 @@ overall_Min7_streamflow_MediumTerm
 
 
 
-maxcf<- max(overall_Min7_streamflow_MediumTerm$Overall_Min_7DayStreamflow)
-mincf<- min(overall_Min7_streamflow_MediumTerm$Overall_Min_7DayStreamflow)
+maxcf<- max(overall_Min7_streamflow_MediumTerm$OverallAverage_Min_7DayStreamflow)
+mincf<- min(overall_Min7_streamflow_MediumTerm$OverallAverage_Min_7DayStreamflow)
 overall_Min7_streamflow_MediumTerm<- overall_Min7_streamflow_MediumTerm %>%  left_join(MediumTerm_StreamflowData,by='site_no')
 
+ dd<- overall_Min7_streamflow_MediumTerm %>% filter(OverallAverage_Min_7DayStreamflow==maxcf)
 
 
 overall_Min7_streamflow_MediumTerm_Map <- ggplot() +
@@ -423,8 +424,8 @@ overall_Min7_streamflow_MediumTerm_Map <- ggplot() +
   geom_sf(data = RiverNetwork_shp, color = "black", size = 0.7) +  
   geom_point(data = overall_Min7_streamflow_MediumTerm, 
              aes(x = station_lon, y = station_lat, 
-                 color = Overall_Min_7DayStreamflow, 
-                 size = Overall_Min_7DayStreamflow),  
+                 color = OverallAverage_Min_7DayStreamflow, 
+                 size = OverallAverage_Min_7DayStreamflow),  
              alpha = 0.8) +
   scale_color_viridis_c(option = "cividis", name = "Min Streamflow (MMD)", 
                         limits = c(mincf, maxcf)) +  
@@ -451,7 +452,7 @@ ggsave(filename = (file.path(file_Path_Variable_O,"Step7aC_MMD.jpg")),
 
 overall_Min7_streamflow_LongTerm<- LongTerm_Min_7DayStreamflow %>% 
   group_by(site_no) %>% 
-  summarise(Overall_Min_7DayStreamflow = (min(Min_7DayStreamflow, na.rm = TRUE))) %>%
+  summarise(Overall_Min_7DayStreamflow = (mean(Min_7DayStreamflow, na.rm = TRUE))) %>%
   ungroup()
 
 overall_Min7_streamflow_LongTerm
