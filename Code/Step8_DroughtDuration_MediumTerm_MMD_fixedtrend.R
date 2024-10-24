@@ -275,6 +275,40 @@ DroughtDurationAnnual<- DroughtDurationAnnual %>% select(station_name,everything
 average_annual_Drought_Duration_DF<- average_annual_Drought_Duration_DF %>% select(station_name,everything())
 
 
+
+
+
+
+
+
+DroughtDurationAnnual<- DroughtDurationAnnual %>% rename(site_no=site)
+##########Medium term annual rds save 
+DroughtDurationAnnual <- DroughtDurationAnnual %>%
+  rename(
+    DroughtDuration_fixed2_days = Total_day_2_F,
+    DroughtDuration_fixed5_days = Total_day_5_F,
+    DroughtDuration_fixed10_days = Total_day_10_F,
+    DroughtDuration_fixed20_days = Total_day_20_F,
+    DroughtDuration_fixed30_days = Total_day_30_F,
+    DroughtDuration_variable2_days = Total_day_2_V,
+    DroughtDuration_variable5_days = Total_day_5_V,
+    DroughtDuration_variable10_days = Total_day_10_V,
+    DroughtDuration_variable20_days = Total_day_20_V,
+    DroughtDuration_variable30_days = Total_day_30_V
+  )
+
+
+MediumTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_step7.rds"))
+
+MediumTerm_StreamflowData_Annual_DroughtDurationAnnual<- MediumTerm_StreamflowData_Annual %>% 
+  left_join(DroughtDurationAnnual, by=c('site_no','Year'))
+MediumTerm_StreamflowData_Annual_DroughtDurationAnnual
+
+
+saveRDS(MediumTerm_StreamflowData_Annual_DroughtDurationAnnual,file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_Max7Seasonal_DroughtDuration_step8.rds"))
+
+
+
 # saveRDS(DroughtDurationAnnual, (file.path(file_Path_Variable_O,"DroughtDurationAnnual_Step8_MediumTerm.rds")))
 # saveRDS(average_annual_Drought_Duration_DF, (file.path(file_Path_Variable_O,"average_annual_Drought_Duration_DF_Step8_MediumTerm..rds")))
 # saveRDS(AnnualTrendDroughtDuration, (file.path(file_Path_Variable_O,"AnnualTrendDroughtDuration_Step8_MediumTerm..rds")))

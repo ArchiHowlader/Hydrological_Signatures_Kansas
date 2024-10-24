@@ -232,6 +232,12 @@ threshold_values_df_Fig<- threshold_values_df %>%
 
 
 
+
+
+
+
+
+
 desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
 watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
 RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
@@ -513,9 +519,57 @@ print(threshold_values_df_annual)
 
 threshold_values_df_annual<- threshold_values_df_annual %>% select(station_name,everything())
 
+
+
+colnames(threshold_values_df_annual) <- as.character(colnames(threshold_values_df_annual))
+
+threshold_values_df_annual_rds <- threshold_values_df_annual %>%
+  rename(
+    DroughtDeficit_fixed2_MMD = total_deficit_fixed_2,
+    DroughtDeficit_fixed5_MMD = total_deficit_fixed_5,
+    DroughtDeficit_fixed10_MMD = total_deficit_fixed_10,
+    DroughtDeficit_fixed20_MMD = total_deficit_fixed_20,
+    DroughtDeficit_fixed30_MMD = total_deficit_fixed_30,
+    DroughtDeficit_variable2_MMD = total_deficit_DOY_2,
+    DroughtDeficit_variable5_MMD = total_deficit_DOY_5,
+    DroughtDeficit_variable10_MMD = total_deficit_DOY_10,
+    DroughtDeficit_variable20_MMD = total_deficit_DOY_20,
+    DroughtDeficit_variable30_MMD = total_deficit_DOY_30
+  )
+
+
+stationLatLon<- data.frame(AllYear_StreamflowData$station_name,AllYear_StreamflowData$site_no,AllYear_StreamflowData$station_lat,AllYear_StreamflowData$station_lon)
+colnames(stationLatLon)<- c('station_name','site_no','station_lat','station_lon')
+threshold_values_df_annual_rds<- threshold_values_df_annual_rds %>% 
+  left_join(stationLatLon,by='station_name')
+
+
+
+# 
+LongTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_Max7Seasonal_DroughtDuration_step8.rds"))
+# 
+# 
+LongTerm_StreamflowData_Annual_DroughtDeficitAnnual<- LongTerm_StreamflowData_Annual %>%
+  left_join(threshold_values_df_annual_rds, by=c('site_no','Year'))
+LongTerm_StreamflowData_Annual_DroughtDeficitAnnual
+# 
+
+
+saveRDS(LongTerm_StreamflowData_Annual_DroughtDeficitAnnual,file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_Max7Seasonal_DroughtDuration_DroughtDeficit_step9.rds"))
+
+
+
+
+
+
+
+
 ########annual sum deficit 
 library(Kendall)
 #####annual sum deficit trend tau and p 
+
+
+
 
 calculate_kendall_tau <- function(df, metric_col) {
   df_clean <- df %>%

@@ -188,7 +188,13 @@ StreamflowData_filtered <- StreamflowData_filtered %>%
                                  filter(Date >= as.Date("1979-01-01") & Date <= as.Date("2023-12-31"))))
 
 StreamflowData_filtered
+
+StreamflowData_filtered$streamflow_data <- lapply(StreamflowData_filtered$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
+
 saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_MMD_step3.rds"))
+
 
 
 # 
@@ -391,6 +397,15 @@ StreamflowData_filtered <- StreamflowData_filtered %>%
                                  filter(Date >= as.Date('1944-01-01') & Date <= as.Date('2023-12-31'))))
 
 
+StreamflowData_filtered$streamflow_data <- lapply(StreamflowData_filtered$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
+
+
 saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_MMD_step3.rds"))
+
+
+
+
 StreamflowData_M_CFS <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_LongSubset_step3.rds")) #%>% 
 StreamflowData_M_CFS

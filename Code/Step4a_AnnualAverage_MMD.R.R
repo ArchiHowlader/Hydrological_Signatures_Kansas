@@ -171,6 +171,10 @@ AllYear_StreamflowData_Annual<-Combined_Data
 saveRDS(AllYear_StreamflowData_Annual, file.path(file_Path_Variable_O, "AllYear_StreamflowData_Annual_MMD_step4.rds"))
 
 
+library(writexl)
+
+write_xlsx(AllYear_StreamflowData_Annual, file.path(file_Path_Variable_O, "AllYear_StreamflowData_Annual_MMD_step4.xlsx"))
+
 
 
 
@@ -226,6 +230,7 @@ library(investr)
 require(gridExtra)
 library(Metrics)
 library(scales)
+library(writexl)
 
 # change file_Path_Variable 
 
@@ -363,6 +368,8 @@ saveRDS(MediumTerm_StreamflowData_Annual,file.path(file_Path_Variable_O, "Medium
 length(unique(MediumTerm_StreamflowData_Annual$site_no))
 
 
+write_xlsx(MediumTerm_StreamflowData_Annual, file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_MMD_step4.xlsx"))
+
 
 
 
@@ -411,6 +418,7 @@ library(investr)
 require(gridExtra)
 library(Metrics)
 library(scales)
+library(writexl)
 
 # change file_Path_Variable 
 
@@ -551,10 +559,11 @@ length(unique(LongTerm_StreamflowData_Annual$site_no))
 # LongTerm_StreamflowData_Annual <- AllYear_StreamflowData_Annual %>%
 #   filter(site_no %in% LongTerm_StreamflowData$site_no)
 # 
-# saveRDS(LongTerm_StreamflowData_Annual,file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_step4.rds"))
+ saveRDS(LongTerm_StreamflowData_Annual,file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_step4.rds"))
 
 
 
+write_xlsx(LongTerm_StreamflowData_Annual, file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_step4.xlsx"))
 
 
 
