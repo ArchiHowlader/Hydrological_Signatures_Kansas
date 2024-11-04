@@ -126,9 +126,9 @@ for (i in seq(1, length(FinalData_cleaned_split), by = 18)) {
 
 Timelineplot1 <- (plot_list[[1]] + plot_list[[2]] )/(plot_list[[3]] + plot_list[[4]] )
 
-ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_MediumSubset_MMD.jpg")), 
-       plot = Timelineplot1, 
-       width = 16, height = 8, dpi = 300)  
+# ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_MediumSubset_MMD.jpg")), 
+#        plot = Timelineplot1, 
+#        width = 16, height = 8, dpi = 300)  
 
 
 
@@ -175,13 +175,16 @@ StreamflowData_filtered_locations<-ggplot() +
   )
 #Streamflowdata_locations
 
-ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_MediumSubset_MMD.jpg")), 
-       plot = StreamflowData_filtered_locations, 
-       width = 8, height = 6, dpi = 300)  
+# ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_MediumSubset_MMD.jpg")), 
+#        plot = StreamflowData_filtered_locations, 
+#        width = 8, height = 6, dpi = 300)  
 
 
 #######filtering dates for the medium term subset
 ###data on >90% of days between 1/1/1979 and 12/31/2023
+StreamflowData_filtered_seasonal<-StreamflowData_filtered
+
+
 
 StreamflowData_filtered <- StreamflowData_filtered %>%
   mutate(streamflow_data = map(streamflow_data, ~ .x %>%
@@ -193,7 +196,22 @@ StreamflowData_filtered$streamflow_data <- lapply(StreamflowData_filtered$stream
   df %>% filter(mean_streamflow_mm_per_day >= 0)
 })
 
-saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_MMD_step3.rds"))
+
+
+
+
+StreamflowData_filtered_seasonal <- StreamflowData_filtered_seasonal %>%
+  mutate(streamflow_data = map(streamflow_data, ~ .x %>%
+                                 filter(Date >= as.Date("1979-01-01") & Date <= as.Date("2024-03-01"))))
+
+StreamflowData_filtered_seasonal
+
+
+StreamflowData_filtered_seasonal$streamflow_data <- lapply(StreamflowData_filtered_seasonal$streamflow_data, function(df) {
+  df %>% filter(mean_streamflow_mm_per_day >= 0)
+})
+
+#saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_MediumSubset_MMD_step3.rds"))
 
 
 
@@ -333,9 +351,9 @@ for (i in seq(1, length(FinalData_cleaned_split), by = 18)) {
 
 Timelineplot1 <- (plot_list[[1]] + plot_list[[2]] )
 
-ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_LongSubset_MMD.jpg")), 
-       plot = Timelineplot1, 
-       width = 16, height = 8, dpi = 300)  
+# ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Timelineplot1_LongSubset_MMD.jpg")), 
+#        plot = Timelineplot1, 
+#        width = 16, height = 8, dpi = 300)  
 
 
 
@@ -382,9 +400,9 @@ StreamflowData_filtered_locations<-ggplot() +
   )
 #Streamflowdata_locations
 
-ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_LongSubset_MMD.jpg")), 
-       plot = StreamflowData_filtered_locations, 
-       width = 8, height = 6, dpi = 300)  
+# ggsave(filename = (file.path(file_Path_Variable_O,"Step3_Streamflowdata_locations_LongSubset_MMD.jpg")), 
+#        plot = StreamflowData_filtered_locations, 
+#        width = 8, height = 6, dpi = 300)  
 
 
 
@@ -402,10 +420,14 @@ StreamflowData_filtered$streamflow_data <- lapply(StreamflowData_filtered$stream
 })
 
 
-saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_MMD_step3.rds"))
+#saveRDS(StreamflowData_filtered,file = file.path(file_Path_Variable_O, "streamflow_tibbles_Filtered_LongSubset_MMD_step3.rds"))
 
 
 
 
 StreamflowData_M_CFS <- readRDS(file.path(file_Path_Variable_O,"streamflow_tibbles_Filtered_LongSubset_step3.rds")) #%>% 
 StreamflowData_M_CFS
+
+
+
+

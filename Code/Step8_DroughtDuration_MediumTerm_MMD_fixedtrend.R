@@ -298,7 +298,7 @@ DroughtDurationAnnual <- DroughtDurationAnnual %>%
   )
 
 
-MediumTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_step7.rds"))
+MediumTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "MediumTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_Max7Seasonal_step7.rds"))
 
 MediumTerm_StreamflowData_Annual_DroughtDurationAnnual<- MediumTerm_StreamflowData_Annual %>% 
   left_join(DroughtDurationAnnual, by=c('site_no','Year'))

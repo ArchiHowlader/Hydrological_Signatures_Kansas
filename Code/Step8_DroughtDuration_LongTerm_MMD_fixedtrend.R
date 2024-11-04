@@ -293,7 +293,7 @@ DroughtDurationAnnual <- DroughtDurationAnnual %>%
     DroughtDuration_variable30_days = Total_day_30_V
   )
 
-LongTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_step7.rds"))
+LongTerm_StreamflowData_Annual <- readRDS(file.path(file_Path_Variable_O, "LongTerm_StreamflowData_Annual_Min7_Max7_Min7Seasonal_Max7Seasonal_step7.rds"))
 
 LongTerm_StreamflowData_Annual_DroughtDurationAnnual<- LongTerm_StreamflowData_Annual %>% 
   left_join(DroughtDurationAnnual, by=c('site_no','Year'))
