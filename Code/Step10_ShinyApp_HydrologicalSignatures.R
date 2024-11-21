@@ -1,0 +1,138 @@
+cat("\014") 
+rm(list=ls())
+library(dataRetrieval)
+library(sf)
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(tibble)
+library(ggplot2)
+library(base64enc)
+library(lubridate)  
+library(patchwork)
+library(ggplot2)
+library(grid)
+library(stringr)
+library(wql)
+library(ggplot2)
+library(grid)
+library(lubridate)
+library(measurements)
+library(dplyr)
+library(tidyverse)
+library(openair)
+library(heatwaveR)
+library(data.table)
+library(ggplot2)
+library(grid)
+library(lubridate)
+library(measurements)
+library(dplyr)
+library(tidyverse)
+library(openair)
+library(heatwaveR)
+library(data.table)
+require(methods)
+library(investr)
+require(gridExtra)
+library(Metrics)
+library(scales)
+library(purrr)
+library(dplyr)
+library(lubridate)
+library(zoo) 
+library(writexl)
+library(readxl)
+library(shiny)
+library(leaflet)
+library(ggplot2)
+library(dplyr)
+
+
+file_Path_Variable_I<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/InputFiles"
+file_Path_Variable_O<- "/Users/ahowl/Desktop/KGS Data analysis/Steps_Workflow_Sept17/Output"
+
+
+Medium_StreamflowData <- read_excel(file.path(file_Path_Variable_O, "HydrologicalSignatures_MediumTerm_StreamflowData.xlsx"))
+Medium_StreamflowData
+
+
+
+desoto_shapefile_path <- file.path(file_Path_Variable_I, "DeSoto_shp/DeSoto.shp")
+watershed_shapefile_path <- file.path(file_Path_Variable_I, "WatershedBoundary_KN_20230113/watershed_bndry.shp")
+RiverNetwork_path <- file.path(file_Path_Variable_I, "rivers_ksrb/rivers_ksrb.shp")
+
+desoto_shp <- st_read(desoto_shapefile_path)
+watershed_shp <- st_read(watershed_shapefile_path)
+RiverNetwork_shp <- st_read(RiverNetwork_path)
+watershed_shp <- st_transform(watershed_shp, st_crs(desoto_shp))
+RiverNetwork_shp <- st_transform(RiverNetwork_shp, st_crs(desoto_shp))
+combined_shp <- st_union(desoto_shp, watershed_shp)
+#combined_shp <- st_union(combined_shp, RiverNetwork_shp)
+combined_shp_leaflet <- st_as_sf(combined_shp)
+
+
+
+
+
+ui <- fluidPage(
+  titlePanel("Station Map and Time Series Viewer"),
+  sidebarLayout(
+    sidebarPanel(
+      h4("Select a Station on the Map")
+    ),
+    mainPanel(
+      leafletOutput("map", height = 400),
+      plotOutput("timeseries_plot")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  data <- Medium_StreamflowData
+  
+  output$map <- renderLeaflet({
+    leaflet(data) %>%
+      addTiles() %>%
+      addCircleMarkers(
+        ~station_lon, ~station_lat,
+        popup = ~paste0("Station: ", station_name.x, "<br>Site No: ", site_no),
+        layerId = ~site_no
+      ) %>%
+      addPolylines(
+        data = RiverNetwork_shp,
+        color = "blue",  # Customize the color for the river network
+        weight = 2       # Adjust line weight for visibility
+      ) %>%
+      addPolylines(
+        data = combined_shp_leaflet,
+        color = "red",   # Customize the color for combined shapefile
+        weight = 2       # Adjust line weight for visibility
+      )
+  })
+  
+  
+  
+  observeEvent(input$map_marker_click, {
+    site_no_selected <- input$map_marker_click$id
+    
+    selected_data <- data %>%
+      filter(site_no == site_no_selected)
+    
+    output$timeseries_plot <- renderPlot({
+      ggplot(selected_data, aes(x = Year, y = MeanAnnualQ_MMD)) +
+        geom_line() +
+        geom_point(color='red') +
+        labs(title = paste("Mean Annual Q for Station", site_no_selected),
+             x = "Year", y = "Mean Annual Q (MMD)") +
+        theme_minimal() +
+        theme_minimal(base_size = 20)+
+        theme(axis.text.x = element_text(size = 14)) +
+        theme(axis.text.y = element_text(size = 14)) 
+  
+    })
+  })
+}
+
+shinyApp(ui = ui, server = server)

@@ -147,7 +147,29 @@ Long_StreamflowData_seasonal_fil<- Long_StreamflowData_seasonal %>% select(site_
                                                                                Max_7DayStreamflow_Fall,Max_7DayStreamflow_Spring,Max_7DayStreamflow_Summer,Max_7DayStreamflow_Winter)
 
 
+Medium_StreamflowData_seasonal_fil <- Medium_StreamflowData_seasonal_fil %>%
+  rename(
+    Min_7DayStreamflow_Fall_SON_MMD = Min_7DayStreamflow_Fall,
+    Min_7DayStreamflow_Spring_MAM_MMD = Min_7DayStreamflow_Spring,
+    Min_7DayStreamflow_Summer_JJA_MMD = Min_7DayStreamflow_Summer,
+    Min_7DayStreamflow_Winter_DJF_MMD = Min_7DayStreamflow_Winter,
+    Max_7DayStreamflow_Fall_SON_MMD = Max_7DayStreamflow_Fall,
+    Max_7DayStreamflow_Spring_MAM_MMD = Max_7DayStreamflow_Spring,
+    Max_7DayStreamflow_Summer_JJA_MMD = Max_7DayStreamflow_Summer,
+    Max_7DayStreamflow_Winter_DJF_MMD = Max_7DayStreamflow_Winter
+  )
 
+Long_StreamflowData_seasonal_fil <- Long_StreamflowData_seasonal_fil %>%
+  rename(
+    Min_7DayStreamflow_Fall_SON_MMD = Min_7DayStreamflow_Fall,
+    Min_7DayStreamflow_Spring_MAM_MMD = Min_7DayStreamflow_Spring,
+    Min_7DayStreamflow_Summer_JJA_MMD = Min_7DayStreamflow_Summer,
+    Min_7DayStreamflow_Winter_DJF_MMD = Min_7DayStreamflow_Winter,
+    Max_7DayStreamflow_Fall_SON_MMD = Max_7DayStreamflow_Fall,
+    Max_7DayStreamflow_Spring_MAM_MMD = Max_7DayStreamflow_Spring,
+    Max_7DayStreamflow_Summer_JJA_MMD = Max_7DayStreamflow_Summer,
+    Max_7DayStreamflow_Winter_DJF_MMD = Max_7DayStreamflow_Winter
+  )
 
 Medium_StreamflowData_seasonal_fil <- Medium_StreamflowData_seasonal_fil %>%
   rename_with(~ paste0(., "_a"))
@@ -175,8 +197,8 @@ Long_StreamflowData_adjustedseason <- Long_StreamflowData %>%
   left_join(Long_StreamflowData_seasonal_fil, by = c('site_no', 'Year'))
 
 
-write_xlsx(Medium_StreamflowData_adjustedseason,file.path(file_Path_Variable_O, "HydrologicalSignatures_MediumTerm_StreamflowData_adjustingseason.xlsx"))
-write_xlsx(Long_StreamflowData_adjustedseason,file.path(file_Path_Variable_O, "HydrologicalSignatures_LongTerm_StreamflowData_adjustingseason.xlsx"))
+#write_xlsx(Medium_StreamflowData_adjustedseason,file.path(file_Path_Variable_O, "HydrologicalSignatures_MediumTerm_StreamflowData_adjustingseason.xlsx"))
+#write_xlsx(Long_StreamflowData_adjustedseason,file.path(file_Path_Variable_O, "HydrologicalSignatures_LongTerm_StreamflowData_adjustingseason.xlsx"))
 
 
 

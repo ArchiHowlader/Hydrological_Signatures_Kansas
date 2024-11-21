@@ -156,11 +156,11 @@ overall_average_streamflow_AllYear_Map <- ggplot() +
                  color = OverallAvgStreamflow__MMD, 
                  size = OverallAvgStreamflow__MMD),  # Map both color and size to streamflow
              alpha = 0.8) +
-  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (_MMD)", 
+  scale_color_viridis_c(option = "plasma", name = "Avg Streamflow (MMD)", 
                         limits = c(0, maxcf)) +  
-  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (_MMD)", 
+  scale_size_continuous(range = c(2, 10), name = "Avg Streamflow (MMD)", 
                         limits = c(0, maxcf)) +  
-  labs(title = "Streamflow Data Locations (All) \nOverall Average Streamflow (_MMD)") +
+  labs(title = "Streamflow Data Locations (All) \nOverall Average Streamflow (MMD)") +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
@@ -171,7 +171,6 @@ overall_average_streamflow_AllYear_Map <- ggplot() +
     axis.ticks = element_blank()   # Remove axis ticks
   )
 
-#print(overall_average_streamflow_AllYear_Map)
 
 ggsave(filename = (file.path(file_Path_Variable_O,"Step4_overall_average_streamflow_AllYear_MMD.jpg")), 
        plot = overall_average_streamflow_AllYear_Map, 
