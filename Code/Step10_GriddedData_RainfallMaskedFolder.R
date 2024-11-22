@@ -100,6 +100,7 @@ rainfall_tibble <- rainfall_tibble %>%
 rainfall_tibble <- rainfall_tibble %>%
   mutate(Year_N = 1903 + Year) 
 
+saveRDS(rainfall_tibble, file = file.path(file_Path_Variable_O, "rainfall_tibble_masked_monthly_to_annual_step10.rds"))
 
 # 
 # for (i in seq_along(rainfall_tibble$Year)) {
@@ -109,6 +110,8 @@ rainfall_tibble <- rainfall_tibble %>%
 rainfall_tibble_1904<- rainfall_tibble %>%  filter(Year_N=='1904')
 rainfall_raster <- rast(rainfall_tibble_1904$rainfall_data[[1]])
 crs(rainfall_raster) <- "EPSG:4269"
+crs(combined_shp_leaflet)
+
 combined_shp_leaflet <- st_transform(combined_shp_leaflet, crs(rainfall_raster))
 rainfall_clipped_raster <- crop(rainfall_raster, combined_shp_leaflet)  
 rainfall_clipped_raster <- mask(rainfall_clipped_raster, vect(combined_shp_leaflet))  
@@ -130,3 +133,6 @@ rainfall_clipped_map_1904 <- ggplot() +
   )
 
 print(rainfall_clipped_map_1904)
+ggsave(filename = (file.path(file_Path_Variable_O,"Step10_rainfall_clipped_map_1904.jpg")), 
+       plot = rainfall_clipped_map_1904, 
+       width = 8, height = 6, dpi = 300)
